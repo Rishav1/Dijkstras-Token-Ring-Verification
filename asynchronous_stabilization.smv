@@ -1,0 +1,39 @@
+MODULE main
+VAR
+  proc0 : process distinguished_process(proc3.value);
+  proc1 : process general_process(proc0.value);
+  proc2 : process general_process(proc1.value);
+  proc3 : process general_process(proc2.value);
+FAIRNESS proc0.running
+FAIRNESS proc1.running
+FAIRNESS proc2.running
+FAIRNESS proc3.running
+
+
+-- Stabilization Condition
+LTLSPEC F G (( proc0.value = proc3.value & proc1.value = proc0.value & proc2.value = proc1.value & proc3.value = proc2.value ) |
+             ( proc0.value != proc3.value & proc1.value != proc0.value & proc2.value = proc1.value & proc3.value = proc2.value ) |
+             ( proc0.value != proc3.value & proc1.value = proc0.value & proc2.value != proc1.value & proc3.value = proc2.value ) |
+             ( proc0.value != proc3.value & proc1.value = proc0.value & proc2.value = proc1.value & proc3.value != proc2.value ) )
+
+MODULE distinguished_process(prev_value)
+VAR
+  value : 0..9;
+ASSIGN
+  init(value) := 0..9;
+  next(value) :=
+    case
+      value = prev_value  : (prev_value + 1) mod 10;
+      TRUE                : value;
+    esac;
+
+MODULE general_process(prev_value)
+VAR
+  value : 0..9;
+ASSIGN
+  init(value) := 0..9;
+  next(value) :=
+    case
+      value != prev_value : prev_value;
+      TRUE                : value;
+    esac;
